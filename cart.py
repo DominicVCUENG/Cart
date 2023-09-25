@@ -1,63 +1,57 @@
 import requests
-from flask import Flask, jsonify
 
-app = Flask(__name__)
-
-# Replace with the actual URL of the Product Service
-PRODUCT_SERVICE_URL = "http://product-service-host:port"
-
-# Sample user cart data
-user_carts = {}
-
-# Endpoint to retrieve the current contents of a user's shopping cart
-@app.route('/cart/<int:user_id>', methods=['GET'])
-def get_cart(user_id):
-    user_cart = user_carts.get(user_id, {})
-    cart_contents = []
-
-    for product_id, quantity in user_cart.items():
-        product_info = get_product_info(product_id)
-        if product_info:
-            total_price = product_info["price"] * quantity
-            cart_contents.append({
-                "product_id": product_id,
-                "product_name": product_info["name"],
-                "quantity": quantity,
-                "total_price": total_price,
-            })
-
-    return jsonify(cart_contents)
-
-# Endpoint to add a specified quantity of a product to the user's cart
-@app.route('/cart/<int:user_id>/add/<int:product_id>', methods=['POST'])
-def add_to_cart(user_id, product_id):
-    quantity_to_add = int(requests.args.get('quantity', 1))
-    user_cart = user_carts.setdefault(user_id, {})
-    user_cart[product_id] = user_cart.get(product_id, 0) + quantity_to_add
-
-    return jsonify({"message": "Product added to cart successfully"})
-
-# Endpoint to remove a specified quantity of a product from the user's cart
-@app.route('/cart/<int:user_id>/remove/<int:product_id>', methods=['POST'])
-def remove_from_cart(user_id, product_id):
-    quantity_to_remove = int(requests.args.get('quantity', 1))
-    user_cart = user_carts.get(user_id, {})
-
-    if product_id in user_cart:
-        user_cart[product_id] = max(user_cart[product_id] - quantity_to_remove, 0)
-        if user_cart[product_id] == 0:
-            del user_cart[product_id]
-
-        return jsonify({"message": "Product removed from cart successfully"})
-    else:
-        return jsonify({"error": "Product not found in cart"}), 404
-
-def get_product_info(product_id):
-    response = requests.get(f"{PRODUCT_SERVICE_URL}/products/{product_id}")
+def get_all_products():
+    response = requests.get(f'http://127.0.0.1:5000/products')
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        return data
     else:
+        print(f"Error getting products. Status code: {response.status_code}")
         return None
 
+def add_product(id, name, price, quantity):
+    new_product = {"id": id, "name": name, "price": price, "quantity": quantity}
+    response = requests.post(f'http://127.0.0.1:5000/products', json = new_product)
+    if response.status_code == 201:
+        data = response.json()
+        return data
+    else:
+        print(f"Error adding product. Status: {response.json()}")
+        return None
+
+def remove_product(product_id):
+    response = requests.delete(f'http://127.0.0.1:5000/products/{product_id}')
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        print(f"Error removing product. Status code: {response.status_code}")
+        return None
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+
+    all_products = get_all_products()
+    print("All Products:")
+    print(all_products)
+
+    product_id = 1
+    product_name = "peaches"
+    product_price = .50
+    product_quantity = 25
+
+    added_product = add_product(product_id, product_name, product_price, product_quantity)
+    print(f"\nAdded Product {product_name}:\n")
+    print(added_product)
+
+    all_products = get_all_products()
+    print("\nAll Products:\n")
+    print(all_products)
+
+    removed_product = remove_product(product_id)
+    print(f"\nRemoved Product {product_id}:")
+    print(removed_product)
+
+    all_products = get_all_products()
+    print("\nAll Products:\n")
+    print(all_products)
