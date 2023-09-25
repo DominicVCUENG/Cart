@@ -1,57 +1,75 @@
 import requests
+from flask import Flask, jsonify, request
 
-def get_all_products():
-    response = requests.get(f'http://127.0.0.1:5000/products')
-    if response.status_code == 200:
-        data = response.json()
-        return data
+app = Flask(__name__)
+
+PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com" 
+
+carts = {}
+
+def make_product_service_request(endpoint, method="GET", data=None):
+    url = f"{PRODUCT_SERVICE_URL}/{endpoint}"
+    if method == "GET":
+        response = requests.get(url)
+    elif method == "POST":
+        response = requests.post(url, json=data)
+    return response
+
+# Endpoint: Retrieve the current contents of a user's shopping cart
+@app.route('/cart/<int:user_id>', methods=['GET'])
+def get_cart(user_id):
+    if user_id not in carts:
+        return jsonify({"message": "Cart is empty"}), 200
+    return jsonify(carts[user_id])
+
+# Endpoint: Add a specified quantity of a product to the user's cart
+@app.route('/cart/<int:user_id>/add/<int:product_id>', methods=['POST'])
+def add_to_cart(user_id, product_id):
+    data = request.json
+    if "quantity" not in data:
+        return jsonify({"error": "Quantity is required"}), 400
+
+    product_response = make_product_service_request(f'/products/{product_id}')
+    
+    if product_response.status_code == 200:
+        product_data = product_response.json()
+        product_name = product_data['product']['name']
+        product_price = product_data['product']['price']
+        
+        if user_id not in carts:
+            carts[user_id] = {"items": {}}
+        
+        if product_id in carts[user_id]["items"]:
+            carts[user_id]["items"][product_id]["quantity"] += data['quantity']
+        else:
+            carts[user_id]["items"][product_id] = {
+                "name": product_name,
+                "quantity": data['quantity'],
+                "price": product_price,
+            }
+        
+        return jsonify({"message": f"Product {product_id} added to cart", "cart": carts[user_id]}), 201
     else:
-        print(f"Error getting products. Status code: {response.status_code}")
-        return None
+        return jsonify({"error": "Product not found"}), 404
 
-def add_product(id, name, price, quantity):
-    new_product = {"id": id, "name": name, "price": price, "quantity": quantity}
-    response = requests.post(f'http://127.0.0.1:5000/products', json = new_product)
-    if response.status_code == 201:
-        data = response.json()
-        return data
+# Endpoint: Remove a specified quantity of a product from the user's cart
+@app.route('/cart/<int:user_id>/remove/<int:product_id>', methods=['POST'])
+def remove_from_cart(user_id, product_id):
+    data = request.json
+    if "quantity" not in data:
+        return jsonify({"error": "Quantity is required"}), 400
+
+    if user_id not in carts or product_id not in carts[user_id]["items"]:
+        return jsonify({"error": "Product not found in the cart"}), 404
+
+    current_quantity = carts[user_id]["items"][product_id]["quantity"]
+    
+    if data["quantity"] >= current_quantity:
+        del carts[user_id]["items"][product_id]
     else:
-        print(f"Error adding product. Status: {response.json()}")
-        return None
+        carts[user_id]["items"][product_id]["quantity"] -= data["quantity"]
 
-def remove_product(product_id):
-    response = requests.delete(f'http://127.0.0.1:5000/products/{product_id}')
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        print(f"Error removing product. Status code: {response.status_code}")
-        return None
-
+    return jsonify({"message": f"Product {product_id} removed from cart", "cart": carts[user_id]}), 200
 
 if __name__ == '__main__':
-
-    all_products = get_all_products()
-    print("All Products:")
-    print(all_products)
-
-    product_id = 1
-    product_name = "peaches"
-    product_price = .50
-    product_quantity = 25
-
-    added_product = add_product(product_id, product_name, product_price, product_quantity)
-    print(f"\nAdded Product {product_name}:\n")
-    print(added_product)
-
-    all_products = get_all_products()
-    print("\nAll Products:\n")
-    print(all_products)
-
-    removed_product = remove_product(product_id)
-    print(f"\nRemoved Product {product_id}:")
-    print(removed_product)
-
-    all_products = get_all_products()
-    print("\nAll Products:\n")
-    print(all_products)
+    app.run(debug=True)
