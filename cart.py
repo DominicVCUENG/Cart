@@ -35,9 +35,13 @@ def add_to_cart(user_id, product_id):
         product_data = product_response.json()
         product_name = product_data['product']['name']
         product_price = product_data['product']['price']
+        product_quantity = product_data['product']['quantity']
         
         if user_id not in carts:
             carts[user_id] = {"items": {}}
+        
+        if data["quantity"] > product_quantity:
+            return jsonify({"message": f"Quantity unavailable for {product_name}. Only {product_quantity} avaiable."})
         
         if product_id in carts[user_id]["items"]:
             carts[user_id]["items"][product_id]["quantity"] += data['quantity']
