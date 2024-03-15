@@ -8,7 +8,7 @@ PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com"
 carts = {}
 
 def make_product_service_request(endpoint, method="GET", data=None):
-    url = f"{PRODUCT_SERVICE_URL}/{endpoint}"
+    url = f"{PRODUCT_SERVICE_URL}{endpoint}"
     if method == "GET":
         response = requests.get(url)
     elif method == "POST":
