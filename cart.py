@@ -72,19 +72,14 @@ def remove_from_cart(user_id, product_id):
     return jsonify({"message": f"Product {product_id} removed from cart", "cart": carts[user_id]}), 200
 
 # Endpoint 4: Remove all contents from a user's cart
-@app.route('/cart/<int:user_id>/remove', methods=['DELETE'])
-def remove_all(user_id):
-    data = request.json
-    if "quantity" not in data:
-        return jsonify({"error": "Quantity is required"}), 400
+@app.route('/cart/<int:user_id>/clear', methods=['DELETE'])
+def clear_cart(user_id):
+    if user_id not in carts:
+        return jsonify({"error": "Cart not found for the user"}), 404
 
-    if user_id not in carts or not carts[user_id]["items"]:
-        return jsonify({"error": "Product not found in the cart"}), 404
-    
-    for product in carts[user_id]["items"]:
-        del product
+    carts[user_id]["items"] = {}
 
-    return jsonify({"message": "All products removed from cart"}), 200
+    return jsonify({"message": "Cart cleared successfully", "cart": carts[user_id]}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
