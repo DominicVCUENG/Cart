@@ -15,14 +15,14 @@ def make_product_service_request(endpoint, method="GET", data=None):
         response = requests.post(url, json=data)
     return response
 
-# Endpoint: Retrieve the current contents of a user's shopping cart
+# Endpoint 1: Retrieve contents of a user's cart
 @app.route('/cart/<int:user_id>', methods=['GET'])
 def get_cart(user_id):
     if user_id not in carts:
         return jsonify({"message": "Cart is empty"}), 200
     return jsonify(carts[user_id])
 
-# Endpoint: Add a specified quantity of a product to the user's cart
+# Endpoint 2: Add a specified quantity of a product to the user's cart
 @app.route('/cart/<int:user_id>/add/<int:product_id>', methods=['POST'])
 def add_to_cart(user_id, product_id):
     data = request.json
@@ -52,8 +52,8 @@ def add_to_cart(user_id, product_id):
     else:
         return jsonify({"error": "Product not found"}), 404
 
-# Endpoint: Remove a specified quantity of a product from the user's cart
-@app.route('/cart/<int:user_id>/remove/<int:product_id>', methods=['POST'])
+# Endpoint 3: Remove a specified quantity of a product from the user's cart
+@app.route('/cart/<int:user_id>/remove/<int:product_id>', methods=['DELETE'])
 def remove_from_cart(user_id, product_id):
     data = request.json
     if "quantity" not in data:
@@ -70,6 +70,21 @@ def remove_from_cart(user_id, product_id):
         carts[user_id]["items"][product_id]["quantity"] -= data["quantity"]
 
     return jsonify({"message": f"Product {product_id} removed from cart", "cart": carts[user_id]}), 200
+
+# Endpoint 4: Remove all contents from a user's cart
+@app.route('/cart/<int:user_id>/remove', methods=['DELETE'])
+def remove_all(user_id):
+    data = request.json
+    if "quantity" not in data:
+        return jsonify({"error": "Quantity is required"}), 400
+
+    if user_id not in carts or not carts[user_id]["items"]:
+        return jsonify({"error": "Product not found in the cart"}), 404
+    
+    for product in carts[user_id]["items"]:
+        del product
+
+    return jsonify({"message": "All products removed from cart"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
