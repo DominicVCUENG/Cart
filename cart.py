@@ -1,7 +1,9 @@
 import requests
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com" 
 
