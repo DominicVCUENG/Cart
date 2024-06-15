@@ -5,7 +5,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com" 
+"""PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com" """
+PRODUCT_SERVICE_URL = "http://127.0.0.1:8080" 
 
 carts = {}
 
@@ -15,6 +16,8 @@ def make_product_service_request(endpoint, method="GET", data=None):
         response = requests.get(url)
     elif method == "POST":
         response = requests.post(url, json=data)
+    elif method == "PUT":
+        response = requests.put(url, json=data)
     return response
 
 # Endpoint 1: Retrieve contents of a user's cart
@@ -39,22 +42,32 @@ def add_to_cart(user_id, product_id):
         product_price = product_data['product']['price']
         product_quantity = product_data['product']['quantity']
         
-        if user_id not in carts:
-            carts[user_id] = {"items": {}}
-        
         if data["quantity"] > product_quantity:
-            return jsonify({"message": f"Quantity unavailable for {product_name}. Only {product_quantity} avaiable."})
-        
-        if product_id in carts[user_id]["items"]:
-            carts[user_id]["items"][product_id]["quantity"] += data['quantity']
+            return jsonify({"message": f"Quantity unavailable for {product_name}. Only {product_quantity} available."})
+
+        # Update the product quantity in the product service
+        update_quantity_response = make_product_service_request(
+            f'/products/{product_id}/remove_quantity',
+            method="PUT",
+            data={"quantity": data["quantity"]}
+        )
+
+        if update_quantity_response.status_code == 200:
+            if user_id not in carts:
+                carts[user_id] = {"items": {}}
+            
+            if product_id in carts[user_id]["items"]:
+                carts[user_id]["items"][product_id]["quantity"] += data['quantity']
+            else:
+                carts[user_id]["items"][product_id] = {
+                    "name": product_name,
+                    "quantity": data['quantity'],
+                    "price": product_price,
+                }
+            
+            return jsonify({"message": f"Product {product_id} added to cart", "cart": carts[user_id]}), 201
         else:
-            carts[user_id]["items"][product_id] = {
-                "name": product_name,
-                "quantity": data['quantity'],
-                "price": product_price,
-            }
-        
-        return jsonify({"message": f"Product {product_id} added to cart", "cart": carts[user_id]}), 201
+            return jsonify({"error": "Failed to update product quantity"}), 400
     else:
         return jsonify({"error": "Product not found"}), 404
 
