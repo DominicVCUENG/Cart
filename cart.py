@@ -5,8 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-"""PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com" """
-PRODUCT_SERVICE_URL = "http://127.0.0.1:8080" 
+PRODUCT_SERVICE_URL = "https://product-service-2ki2.onrender.com"
 
 carts = {}
 
