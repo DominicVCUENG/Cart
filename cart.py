@@ -51,22 +51,19 @@ def add_to_cart(user_id, product_id):
             data={"quantity": data["quantity"]}
         )
 
-        if update_quantity_response.status_code == 200:
-            if user_id not in carts:
+        if user_id not in carts:
                 carts[user_id] = {"items": {}}
             
-            if product_id in carts[user_id]["items"]:
-                carts[user_id]["items"][product_id]["quantity"] += data['quantity']
-            else:
-                carts[user_id]["items"][product_id] = {
-                    "name": product_name,
-                    "quantity": data['quantity'],
-                    "price": product_price,
-                }
-            
-            return jsonify({"message": f"Product {product_id} added to cart", "cart": carts[user_id]}), 201
+        if product_id in carts[user_id]["items"]:
+            carts[user_id]["items"][product_id]["quantity"] += data['quantity']
         else:
-            return jsonify({"error": "Failed to update product quantity"}), 400
+            carts[user_id]["items"][product_id] = {
+                "name": product_name,
+                "quantity": data['quantity'],
+                "price": product_price,
+            }
+        
+        return jsonify({"message": f"Product {product_id} added to cart", "cart": carts[user_id]}), 201
     else:
         return jsonify({"error": "Product not found"}), 404
 
