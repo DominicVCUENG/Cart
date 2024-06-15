@@ -44,13 +44,6 @@ def add_to_cart(user_id, product_id):
         if data["quantity"] > product_quantity:
             return jsonify({"message": f"Quantity unavailable for {product_name}. Only {product_quantity} available."})
 
-        # Update the product quantity in the product service
-        update_quantity_response = make_product_service_request(
-            f'/products/{product_id}/remove_quantity',
-            method="PUT",
-            data={"quantity": data["quantity"]}
-        )
-
         if user_id not in carts:
                 carts[user_id] = {"items": {}}
             
