@@ -40,6 +40,7 @@ This repository contains the code for a Cart Service, which is a part of an onli
 **Description**: Adds a specified quantity of a product to the user's cart.
 
 **Request Body**:
+
 ```
 {
     "quantity": <quantity>
@@ -56,12 +57,12 @@ This repository contains the code for a Cart Service, which is a part of an onli
 **Description**: Removes a specified quantity of a product from the user's cart.
 
 **Request Body**:
+
 ```
 {
     "quantity": <quantity>
 }
 ```
-
 
 ### Remove all contents from a user's cart
 
@@ -137,7 +138,7 @@ data = {
 }
 response = requests.delete('http://localhost:5000/cart/1/remove/2', json=data)
 print(response.json())
-````
+```
 
 ### Clear Cart
 
