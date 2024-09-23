@@ -20,14 +20,14 @@ def make_product_service_request(endpoint, method="GET", data=None):
     return response
 
 # Endpoint 1: Retrieve contents of a user's cart
-@app.route('/cart/<int:user_id>', methods=['GET'])
+@app.route('/cart/<string:user_id>', methods=['GET'])
 def get_cart(user_id):
     if user_id not in carts:
         return jsonify({"message": "Cart is empty"}), 200
     return jsonify(carts[user_id])
 
 # Endpoint 2: Add a specified quantity of a product to the user's cart
-@app.route('/cart/<int:user_id>/add/<int:product_id>', methods=['POST'])
+@app.route('/cart/<string:user_id>/add/<int:product_id>', methods=['POST'])
 def add_to_cart(user_id, product_id):
     data = request.json
     if "quantity" not in data:
@@ -64,7 +64,7 @@ def add_to_cart(user_id, product_id):
         return jsonify({"error": "Product not found"}), 404
 
 # Endpoint 3: Remove a specified quantity of a product from the user's cart
-@app.route('/cart/<int:user_id>/remove/<int:product_id>', methods=['DELETE'])
+@app.route('/cart/<string:user_id>/remove/<int:product_id>', methods=['DELETE'])
 def remove_from_cart(user_id, product_id):
     data = request.json
     if "quantity" not in data:
@@ -83,7 +83,7 @@ def remove_from_cart(user_id, product_id):
     return jsonify({"message": f"Product {product_id} removed from cart", "cart": carts[user_id]}), 200
 
 # Endpoint 4: Remove all contents from a user's cart
-@app.route('/cart/<int:user_id>/clear', methods=['DELETE'])
+@app.route('/cart/<string:user_id>/clear', methods=['DELETE'])
 def clear_cart(user_id):
     if user_id not in carts:
         return jsonify({"error": "Cart not found for the user"}), 404
